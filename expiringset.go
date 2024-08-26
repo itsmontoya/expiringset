@@ -26,11 +26,11 @@ type ExpiringSet struct {
 	cancel *time.Timer
 }
 
-func (e *ExpiringSet) Set(key string) (exists bool) {
+func (e *ExpiringSet) Set(key string) (inserted bool) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
 
-	exists = e.set(key)
+	inserted = e.set(key)
 	e.refreshTimer()
 	return
 }
@@ -53,10 +53,11 @@ func (e *ExpiringSet) unset(key string) {
 	e.refreshTimer()
 }
 
-func (e *ExpiringSet) set(key string) (exists bool) {
+func (e *ExpiringSet) set(key string) (inserted bool) {
 	now := time.Now()
 	expiresAt := now.Add(e.ttl)
-	_, exists = e.byKey[key]
+	_, exists := e.byKey[key]
+	inserted = !exists
 	e.byKey[key] = now
 	e.expirationList = append(e.expirationList, entry{expiresAt: expiresAt, key: key})
 	return
